@@ -6,5 +6,5 @@
 2. css-module
 3. Typescript
 4. ts-lint
-5. webpack-merge
+5. Webpack-merge
 6. env
