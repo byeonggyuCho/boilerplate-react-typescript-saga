@@ -6,6 +6,10 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 const path = require("path");
 
+dotenv.config({
+  path: `./config/develop.env`,
+});
+
 const postcssNormalize = require("postcss-normalize");
 // style files regexes
 const cssRegex = /\.css$/;

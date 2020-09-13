@@ -1,11 +1,6 @@
 const merge = require("webpack-merge");
 const common = require("./webpack.config.js");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const dotenv = require("dotenv");
-
-dotenv.config({
-  path: `./config/prod.env`,
-});
 
 module.exports = merge(common, {
   mode: "production",

@@ -3,9 +3,7 @@ const dotenv = require("dotenv");
 const common = require("./webpack.config.js");
 const webpack = require("webpack");
 const path = require("path");
-dotenv.config({
-  path: `./config/develop.env`,
-});
+
 const proxy = require("./proxy"); // 위에서 작성한 proxy.js 파일의 함수
 
 module.exports = merge(common, {
