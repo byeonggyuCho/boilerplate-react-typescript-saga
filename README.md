@@ -5,6 +5,6 @@
 1. post-css
 2. css-module
 3. Typescript
-4. ts-lint
+4. TS-lint
 5. Webpack-merge
 6. env
