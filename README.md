@@ -7,4 +7,4 @@
 3. Typescript
 4. TS-lint
 5. Webpack-merge
-6. env
+6. ENV
