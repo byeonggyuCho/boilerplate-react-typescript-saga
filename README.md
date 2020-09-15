@@ -1,6 +1,6 @@
 # 웹팩 보일러 플레이트
 
-## 적용내용-test1
+## 적용내용-test2
 
 1. post-css
 2. css-module
