@@ -1,20 +1,10 @@
-import React from "react";
-import { Route, Switch, Redirect } from "react-router-dom";
-import { NotFoundPage, Home, Paperbase } from "./pages";
-import { useSelector } from "react-redux";
-import { RootState } from "./reducers";
+import React, { lazy, Suspense, useEffect } from 'react';
+import { hot } from 'react-hot-loader';
+import { useSelector, shallowEqual } from 'react-redux';
+import { Loading } from '@components/Molecules/Route';
+import { RootState } from '@modules';
 
 const App: React.FC = () => {
-  const isLogin = true;
-
-  return (
-    <>
-      <Switch>
-        <Route exact={true} path="/" component={Paperbase} />
-        <Route exact={true} path="/home" component={Home} />
-        <Route path="*" component={NotFoundPage} />
-      </Switch>
-    </>
-  );
+  return <Suspense fallback={<Loading />}></Suspense>;
 };
-export default App;
+export default isProduct() ? App : hot(module)(App);

@@ -1,56 +1,97 @@
 // webpack.common.js
-const webpack = require("webpack");
-const HtmlWebPackPlugin = require("html-webpack-plugin");
-
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-
-const path = require("path");
-
-dotenv.config({
-  path: `./config/develop.env`,
-});
-
-const postcssNormalize = require("postcss-normalize");
+const webpack = require('webpack');
+const PreloadWebpackPlugin = require('preload-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
+const postcssNormalize = require('postcss-normalize');
+const path = require('path');
+const fs = require('fs');
 // style files regexes
 const cssRegex = /\.css$/;
 const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
+const { templateContent } = require('./template');
+
+const dotenv = require('dotenv');
+
+const en = dotenv.config({
+  path: path.join(__dirname, process.env.NODE_ENV + '.env'),
+});
+
+// . mini-css-extract-plugin은 hot update가 유효하지 않ㄴ다.s
+
+// override env
+const envConfig = dotenv.parse(
+  fs.readFileSync(path.join(__dirname, 'common.env'))
+);
+for (const k in envConfig) {
+  process.env[k] = envConfig[k];
+}
+process.env.BUILD_DATE = new Date().toLocaleDateString();
+
+// TODO: ForkTsCheckerWebpackPlugin
+const isProduction = process.env.NODE_ENV === 'production';
+
+console.log('[WEBPACK] NODE_ENV: ', process.env.NODE_ENV);
+console.log('[WEBPACK] API_SERVER: ', process.env.BASE_URL);
+console.log('[WEBPACK] BUILD_OUTPUT', path.resolve(__dirname, '../build'));
 
 module.exports = {
-  entry: ["@babel/polyfill", "react-hot-loader/patch", "./src/index.tsx"],
+  entry: ['babel-polyfill', 'react-hot-loader/patch', './src/index.tsx'],
   output: {
-    path: path.resolve(__dirname, "../build"),
-    publicPath: "/",
-    filename: "bundle.js",
+    path: path.resolve(__dirname, '../build'),
+    publicPath: '/',
+    filename: isProduction
+      ? 'static/js/[name].[chunkhash:8].js'
+      : 'static/js/[name].[hash:8].js',
+    chunkFilename: isProduction
+      ? 'static/js/[name].[chunkhash:8].chunk.js'
+      : 'static/js/[name].[hash:8].chunk.js',
   },
 
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        loader: "ts-loader",
+        loader: 'ts-loader',
       },
       {
         test: /.jsx?$/,
         exclude: /node_modules/,
         use: [
           {
-            loader: "babel-loader",
+            loader: 'babel-loader',
             options: {
+              modules: 'true', //트리 쉐이킹
+              plugins: [
+                '@babel/plugin-syntax-dynamic-import',
+                [
+                  '@babel/plugin-transform-runtime',
+                  {
+                    absoluteRuntime: false,
+                    helpers: true, // 인라인 바벨 헬퍼 (classCallCheck, extends, 등)을 moduleName. 으로 치환
+                    polyfill: true, // Promise, Set, Map 과 같은 새로운 내장 객체를 전역 오염없이 내부 객체를 참조하도록 변환
+                    regenerator: true, // generator 함수를 전역 오염없이 regenerator runtime 을 사용하도록 변환
+                    useESModules: false,
+                  },
+                ],
+                '@babel/plugin-proposal-class-properties',
+                'react-hot-loader/babel',
+              ],
               presets: [
-                "@babel/preset-env",
+                '@babel/preset-env',
                 {
                   targets: {
-                    browsers: ["last 2 versions", ">= 5% in KR"],
-                    //크롬 최신버전과 하나 하위 버전까지 호환되도록 설정
+                    browsers: ['ie 11', 'last 2 versions', '>= 5% in KR'],
                   },
+                  useBuiltIns: 'usage',
+                  corejs: 3,
+                  shippedProposals: true,
                 },
-                "@babel/preset-react",
-              ],
-              plugins: [
-                "@babel/plugin-proposal-class-properties",
-                "react-hot-loader/babel",
+                '@babel/preset-react',
               ],
             },
           },
@@ -58,18 +99,18 @@ module.exports = {
       },
       {
         test: /\.js$/,
-        exclude: "/node_modules",
-        loader: require.resolve("babel-loader"),
+        exclude: '/node_modules',
+        loader: require.resolve('babel-loader'),
         options: {
-          presets: ["@babel/preset-env"],
+          presets: ['@babel/preset-env'],
         },
       },
       {
         test: /\.html$/,
         use: [
           {
-            loader: "html-loader",
-            options: { minimize: false },
+            loader: 'html-loader',
+            options: { minimize: isProduction ? true : false },
           },
         ],
       },
@@ -77,9 +118,9 @@ module.exports = {
         test: cssRegex,
         exclude: cssModuleRegex,
         use: [
-          "style-loader",
+          MiniCssExtractPlugin.loader,
           {
-            loader: "css-loader",
+            loader: 'css-loader',
             options: {
               modules: false,
               // camelCase: true,
@@ -91,12 +132,12 @@ module.exports = {
       {
         test: cssModuleRegex,
         use: [
-          "style-loader",
+          MiniCssExtractPlugin.loader,
           {
-            loader: "css-loader",
+            loader: 'css-loader',
             options: {
               modules: {
-                localIdentName: "[name]__[local]___[hash:base64:5]",
+                localIdentName: '[name]__[local]___[hash:base64:5]',
               },
               // camelCase: true,
               sourceMap: false,
@@ -109,11 +150,11 @@ module.exports = {
         test: sassRegex,
         exclude: sassModuleRegex,
         use: [
-          "style-loader",
+          MiniCssExtractPlugin.loader,
           {
-            loader: require.resolve("css-loader"),
+            loader: require.resolve('css-loader'),
             options: {
-              modules: false,
+              modules: true,
               // camelCase: true,
               sourceMap: false,
             },
@@ -122,16 +163,16 @@ module.exports = {
             // Options for PostCSS as we reference these options twice
             // Adds vendor prefixing based on your specified browser support in
             // package.json
-            loader: require.resolve("postcss-loader"),
+            loader: require.resolve('postcss-loader'),
             options: {
               // Necessary for external CSS imports to work
               // https://github.com/facebook/create-react-app/issues/2677
-              ident: "postcss",
+              ident: 'postcss',
               plugins: () => [
-                require("postcss-flexbugs-fixes"),
-                require("postcss-preset-env")({
+                require('postcss-flexbugs-fixes'),
+                require('postcss-preset-env')({
                   autoprefixer: {
-                    flexbox: "no-2009",
+                    flexbox: 'no-2009',
                   },
                   stage: 3,
                 }),
@@ -144,11 +185,12 @@ module.exports = {
             },
           },
           {
-            loader: require.resolve("sass-loader"),
+            loader: require.resolve('sass-loader'),
             options: {
               sourceMap: false,
               sassOptions: {
-                includePaths: [path.resolve(__dirname, "../styles")],
+                includePaths: [path.resolve(__dirname, '../src/styles')],
+                data: `@import 'test.scss';`, // 해당 코드 삽입
               },
             },
           },
@@ -158,12 +200,12 @@ module.exports = {
       {
         test: sassModuleRegex,
         use: [
-          "style-loader",
+          MiniCssExtractPlugin.loader, // 프로덕션 환경
           {
-            loader: require.resolve("css-loader"),
+            loader: require.resolve('css-loader'),
             options: {
               modules: {
-                localIdentName: "[name]__[local]___[hash:base64:5]",
+                localIdentName: '[name]__[local]___[hash:base64:5]',
               },
               // camelCase: true,
               sourceMap: false,
@@ -173,16 +215,16 @@ module.exports = {
             // Options for PostCSS as we reference these options twice
             // Adds vendor prefixing based on your specified browser support in
             // package.json
-            loader: require.resolve("postcss-loader"),
+            loader: require.resolve('postcss-loader'),
             options: {
               // Necessary for external CSS imports to work
               // https://github.com/facebook/create-react-app/issues/2677
-              ident: "postcss",
+              ident: 'postcss',
               plugins: () => [
-                require("postcss-flexbugs-fixes"),
-                require("postcss-preset-env")({
+                require('postcss-flexbugs-fixes'),
+                require('postcss-preset-env')({
                   autoprefixer: {
-                    flexbox: "no-2009",
+                    flexbox: 'no-2009',
                   },
                   stage: 3,
                 }),
@@ -195,11 +237,12 @@ module.exports = {
             },
           },
           {
-            loader: require.resolve("sass-loader"),
+            loader: require.resolve('sass-loader'),
             options: {
               sourceMap: false,
               sassOptions: {
-                includePaths: [path.resolve(__dirname, "../styles")],
+                includePaths: [path.resolve(__dirname, '../src/styles')],
+                data: `@import 'test.scss';`, // 해당 코드 삽입
               },
             },
           },
@@ -207,51 +250,106 @@ module.exports = {
       },
 
       {
-        test: /\.(gif|png|jpe?g|svg)$/i,
-        exclude: [/\.(js|mjs|jsx|ts|tsx)$/, /\.html$/, /\.json$/],
-        use: [
-          {
-            loader: "url-loader",
-            options: {
-              limit: 8192,
-              fallback: require.resolve("file-loader"),
-            },
-          },
-        ],
+        test: /\.(jpe?g|png|gif|svg)$/,
+        loader: 'file-loader',
+        options: {
+          name: 'static/media/[name].[hash:8].[ext]',
+        },
       },
 
       {
-        test: /\.(woff|woff2|eot|ttf|otf|)$/,
-        exclude: /node_modules/,
-        use: ["file-loader"],
+        // write files under 10k to inline or copy files over 10k
+        test: /\.(woff|woff2|eot|ttf|otf)$/,
+        loader: 'file-loader',
+        options: {
+          name: 'static/fonts/[name].[ext]',
+        },
       },
     ],
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js"],
+    fallback: {
+      path: require.resolve('path-browserify'),
+    },
+    extensions: ['.ts', '.tsx', '.js'],
+    alias: {
+      process: 'process/browser',
+      '@': path.resolve(__dirname, '../src/'),
+      '@pages': path.resolve(__dirname, '../src/pages'),
+      '@images': path.resolve(__dirname, '../src/assets/images'),
+      '@fonts': path.resolve(__dirname, '../src/assets/fonts'),
+      '@components': path.resolve(__dirname, '../src/components'),
+      '@containers': path.resolve(__dirname, '../src/containers'),
+      '@config': path.resolve(__dirname, '../src/config'),
+      '@store': path.resolve(__dirname, '../src/store'),
+      '@styles': path.resolve(__dirname, '../src/styles'),
+      '@hoc': path.resolve(__dirname, '../src/hoc'),
+      '@hooks': path.resolve(__dirname, '../src/hooks'),
+      '@modules': path.resolve(__dirname, '../src/modules'),
+      '@models': path.resolve(__dirname, '../src/models'),
+      '@modals': path.resolve(__dirname, '../src/modals'),
+      '@utils': path.resolve(__dirname, '../src/utils'),
+      '@icons': path.resolve(__dirname, '../src/components/common/Icon'),
+    },
   },
   plugins: [
-    new HtmlWebPackPlugin({
-      template: "./public/index.html",
-      filename: "index.html",
-      favicon: "public/favicon.ico",
-    }),
-    // DefinePlugin으로 'process.env.API_URL'를 process.env.API_URL 이라는 환경변수를 정의하고
-    new webpack.DefinePlugin({
-      "process.env": {
-        NODE_ENV: JSON.stringify(process.env.NODE_ENV),
-        PAYPLE_URL: JSON.stringify(process.env.PAYPLE_URL),
-        BASE_URL: JSON.stringify(process.env.BASE_URL),
+    new PreloadWebpackPlugin({
+      rel: 'preload',
+      as(entry) {
+        if (/\.css$/.test(entry)) return 'style';
+        if (/\.woff$/.test(entry)) return 'font';
+        if (/\.png$/.test(entry)) return 'image';
+        return 'script';
       },
     }),
-    // EnvironmentPlugin 이 뒤에 []에 해당하는 환경변수를 클라이언트로 전달해 준답니다.
-    new webpack.EnvironmentPlugin({ ...process.env }),
-    // new MiniCssExtractPlugin({
-    //   filename: "static/css/[name].[contenthash:8].css",
-    //   chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
+    new webpack.ProvidePlugin({
+      process: 'process/browser',
+    }),
+    // new webpack.BannerPlugin(banner),
+    // new HtmlWebpackPlugin({
+    //   url: './',
+    //   title: '알바체크 - A급 매장의 업무관리',
+    //   hash: true, // 정적 파일을 불러올때 쿼리문자열에 웹팩 해쉬값을 추가한다
+    //   templateContent: ({ htmlWebpackPlugin }) =>
+    //     templateContent(htmlWebpackPlugin),
+    //   // template: './public/index.html',
+    //   filename: 'index.html',
+    //   favicon: 'public/favicon.ico',
     // }),
+    // new webpack.DefinePlugin({
+    //   "process.env": Object.keys(process.env).reduce((env, key) => {
+    //     env[key] = JSON.stringify(process.env[key]);
+    //     return env;
+    //   }, {}),
+    // }),
+    // EnvironmentPlugin 이 뒤에 []에 해당하는 환경변수를 클라이언트로 전달해 준답니다.
+    new webpack.EnvironmentPlugin({
+      ...process.env,
+    }),
 
-    new webpack.NamedModulesPlugin({}),
-    new CleanWebpackPlugin(),
+    // webpack.NamedModulesPlugin({}),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: './node_modules/axios/dist/axios.min.js',
+          // to: './axios.min.js', // 목적지 파일에 들어간다
+          to: './static/js/axios.min.js', // 목적지 파일에 들어간다
+        },
+      ],
+    }),
+
+    new WebpackManifestPlugin({
+      fileName: 'manifest.json',
+      basePath: './build/',
+    }),
+
+    new MiniCssExtractPlugin({
+      filename: isProduction
+        ? 'static/css/[name].[contenthash:8].css'
+        : 'static/css/[name].[hash:8].css',
+      chunkFilename: isProduction
+        ? 'static/css/[name].[contenthash:8].chunk.css'
+        : 'static/css/[name].[hash:8].chunk.css',
+    }),
   ],
 };

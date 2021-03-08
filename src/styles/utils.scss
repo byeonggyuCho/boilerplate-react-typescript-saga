@@ -1,4 +1,12 @@
 @import 'all';
 
-
 $navWidth: 54px;
+
+@mixin backgroundCenter($imgUrl, $size) {
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-image: url($imgUrl);
+  background-size: $size $size;
+}
+
+/* opacity로 요소 감추는 함수 만들기*/

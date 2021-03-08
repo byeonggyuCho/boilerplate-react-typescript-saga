@@ -1,25 +1,31 @@
-import React from "react";
-// import "./index.scss";
-import App from "./App";
-// import { BrowserRouter } from "react-router-dom";
-import { Provider } from "react-redux";
-import { ConnectedRouter } from "connected-react-router";
-import configureStore, { history } from "./store/configureStore";
+import React, { useEffect } from 'react';
+import App from './App';
+import { Provider } from 'react-redux';
+import { persistStore } from 'redux-persist';
+import { PersistGate } from 'redux-persist/integration/react';
+import { ConnectedRouter } from 'connected-react-router';
+import configureStore, { history } from './store/configureStore';
+import theme from '@styles/theme';
+import { ThemeProvider } from '@styles/them-components';
+import { GlobalStyle } from '@styles/global-style';
+import { getCurrentDate, loadScript } from '@utils/common';
+export const store = configureStore(history);
+export const persistor = persistStore(store);
 
-const store = configureStore(history);
+// 우클릭 막기
+window.oncontextmenu = () => false;
 
-function mouseRightClick() {
-  // 우클릭 막기
-  window.oncontextmenu = () => false;
-}
-mouseRightClick();
-
-const Root: React.FC = (props) => {
+const Root: React.FC = ({ children }) => {
   return (
     <Provider store={store}>
-      <ConnectedRouter history={history}>
-        {props.children ? props.children : <App />}
-      </ConnectedRouter>
+      <GlobalStyle />
+      <PersistGate persistor={persistor}>
+        <ThemeProvider theme={theme}>
+          <ConnectedRouter history={history}>
+            {children ? children : <App />}
+          </ConnectedRouter>
+        </ThemeProvider>
+      </PersistGate>
     </Provider>
   );
 };

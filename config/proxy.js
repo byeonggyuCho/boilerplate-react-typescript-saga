@@ -1,32 +1,82 @@
-const dotenv = require("dotenv");
-
+const dotenv = require('dotenv');
+const path = require('path');
 dotenv.config({
-  path: `./dev.env`,
+  path: path.join(__dirname, `develop.env`),
 });
 
+/**
+ * @description webpack dev-server의 proxy server는 http-proxy-middleware를 이용하여 구현되어있습니다
+ * 세부설정은  https://github.com/chimurai/http-proxy-middleware#options 를 참고 하시기 바랍니다.
+ * @param {*} entry
+ *
+ */
+
+// Webpack Proxy Middleware
+const PREFIX = '[HPM]';
+
+const relayRequestHeaders = (proxyReq, req) => {
+  console.log(PREFIX, `🔥🔥🔥 LOADING: [${req.method}] ${req.path} 🔥🔥🔥`);
+  Object.entries(req.headers).forEach(([key, value]) => {
+    if (
+      key.toLocaleLowerCase().includes('cookie') &&
+      req.headers['Authorization']
+    ) {
+      console.log(PREFIX, `request with Authorization`);
+    }
+    // console.log(`${key}: ${value}`);
+    proxyReq.setHeader(key, value);
+    // proxyReq.setHeader('Cookie', cookie);
+  });
+};
+
+const relayResponseHeaders = (proxyRes, req, res) => {
+  // 클라이언트에 전달할...헤더값을 추가할 수 있음.
+  console.log(PREFIX, `🔥🔥🔥 SUCCESS: [${req.method}] ${req.path} 🔥🔥🔥`);
+  Object.keys(proxyRes.headers).forEach((key) => {
+    // console.log(`${key}: ${proxyRes.headers[key]}`);
+    res.append(key, proxyRes.headers[key]);
+  });
+};
+
+// let cookie;
 module.exports = function (entry) {
   return [
     {
-      // "/**": {
-      // 모든 요청을 백엔드로 bypass
-      context: ["/v1", "/health", "/code"],
+      context: ['/v1', '/health', '/code'],
       target: process.env.PROXY_URL,
-      // target: {
-      //   protocol: process.env.PROXY_PROTOCOL, // 백엔드 프로토콜 'http'
-      //   host: process.env.PROXY_HOST, // 백엔드 호스트 'localhost'
-      //   port: process.env.PROXY_PORT, // 백엔드 포트 '8080'
-      // },
-      onProxyReq: function (proxyReq) {
-        // proxyReq.setHeader("Cookie", "JSESSIONID=" + ProxySession[buildType].JSESSIONID + ";msa=" + ProxySession[buildType].msa + ";msa_rmc=" + ProxySession[buildType].msa_rmc + ";msa_rmc_disabled=" + ProxySession[buildType].msa_rmc);
-      },
-      onProxyRes: proxyProcessing(process.env.ASSETS_PUBLIC_PATH, entry),
+      onProxyReq: relayRequestHeaders,
+      onProxyRes: relayResponseHeaders,
+
+      // proxyProcessing(process.env.ASSETS_PUBLIC_PATH, entry),
       // HTML 구분 및 스크립트 처리 로직. 후술
       // },
+      //specify whether you want to ignore the proxy path of the incoming request (note: you will have to append / manually if required).
       ignorePath: false,
+      // host header의 origin을 타겟 URL로 변경한다. (CORS 설정에 필요하다.)
+      // : true/false, Default: false - changes the origin of the host header to the target URL
       changeOrigin: true,
-      // secure: true,
+      // SSL 인증서를 확인하는 경우
       secure: false,
       withCredentials: true,
+      cookieDomainRewrite: {
+        '*': 'localhost',
+      },
+
+      // rewrites path of set-cookie headers. Possible values:
+      // cookiePathRewrite: {
+      //   "/unchanged.path/": "/unchanged.path/",
+      //   "/old.path/": "/new.path/",
+      //   "*": ""
+      // },
+
+      hostRewrite: true,
+      autoRewrite: true,
+      xfwd: true,
+      // websockes
+      ws: true,
+      debug: true,
+      logLevel: 'debug',
+      preserveHeaderKeyCase: true,
     },
   ];
 };
@@ -44,11 +94,11 @@ function proxyProcessing(publicPath, entry) {
 
   return function (proxyRes, request, response) {
     if (
-      request.originalUrl === "/" && // <== 스크립트를 삽입할 페이지의 URL.
+      request.originalUrl === '/' && // <== 스크립트를 삽입할 페이지의 URL.
       // 이 구문을 생략하면 모든 페이지에 스크립트 삽입됨
       proxyRes.headers &&
-      proxyRes.headers["content-type"] &&
-      proxyRes.headers["content-type"].match("text/html")
+      proxyRes.headers['content-type'] &&
+      proxyRes.headers['content-type'].match('text/html')
     ) {
       // content type이 HTML인지 체크
 
@@ -81,10 +131,10 @@ function entryToScript(publicPath, entry) {
   // Webpack Entry Point는 배열, 객체, 문자를 지원하므로 분기 처리
   if (entry instanceof Array) {
     files = entry
-      .map((str) => str.split("/"))
+      .map((str) => str.split('/'))
       .map((arr) => arr[arr.length - 1]);
   } else if (entry instanceof Object) {
-    files = Object.keys(entry).map((key) => key + ".js");
+    files = Object.keys(entry).map((key) => key + '.js');
   } else {
     files = [entry];
   }
@@ -92,7 +142,7 @@ function entryToScript(publicPath, entry) {
   // public path와 파일명을 합쳐 스크립트 삽입 태그로 변경
   return files
     .map((name) => `<script src="${publicPath}${name}"></script>`)
-    .join("");
+    .join('');
 }
 
 /**
@@ -103,8 +153,8 @@ function entryToScript(publicPath, entry) {
  * @returns {string} 스크립트 태그가 끼워넣어진 HTML 문자열
  */
 function appendScriptToHtml(html, script) {
-  if (html.includes("</html>")) {
-    html = html.replace("</html>", script + "</html>");
+  if (html.includes('</html>')) {
+    html = html.replace('</html>', script + '</html>');
   }
   return html;
 }

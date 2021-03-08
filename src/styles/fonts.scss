@@ -1,0 +1,24 @@
+@import 'utils.scss';
+
+@font-face {
+  font-family: 'Spoqa Han Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Spoqa Han Sans Regular'),
+    url('../assets/fonts/SpoqaHanSansRegular.woff') format('woff'),
+    url('../assets/fonts/SpoqaHanSansRegular.woff2') format('woff2'),
+    url('../assets/fonts/SpoqaHanSansRegular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Spoqa Han Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Spoqa Han Sans Bold'),
+    url('../assets/fonts/SpoqaHanSansBold.woff') format('woff'),
+    url('../assets/fonts/SpoqaHanSansBold.woff2') format('woff2'),
+    url('../assets/fonts/SpoqaHanSansBold.ttf') format('truetype');
+}
+
+// IE11에서 정적 폰트파일이 적용되지 않는 문제가 있다.
+// @import url(//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css);

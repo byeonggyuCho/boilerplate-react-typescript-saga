@@ -1,6 +1,6 @@
 {
-  "short_name": "react-project",
-  "name": "react-project",
+  "short_name": "Template",
+  "name": "Template",
   "icons": [
     {
       "src": "public/favicon.ico",
