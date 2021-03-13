@@ -119,7 +119,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "7.12.1",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "babel-polyfill": "^6.26.0",
     "clsx": "^1.1.1",
     "connected-react-router": "^6.8.0",
