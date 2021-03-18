@@ -40,6 +40,7 @@ console.log('[WEBPACK] BUILD_OUTPUT', path.resolve(__dirname, '../build'));
 
 module.exports = {
   entry: ['babel-polyfill', 'react-hot-loader/patch', './src/index.tsx'],
+  target: ['web', 'es5'],
   output: {
     path: path.resolve(__dirname, '../build'),
     publicPath: '/',
@@ -49,16 +50,41 @@ module.exports = {
     chunkFilename: isProduction
       ? 'static/js/[name].[chunkhash:8].chunk.js'
       : 'static/js/[name].[hash:8].chunk.js',
+
+    environment: {
+      // The environment supports arrow functions ('() => { ... }').
+      // arrowFunction: false,
+      // The environment supports BigInt as literal (123n).
+      // bigIntLiteral: false,
+      // The environment supports const and let for variable declarations.
+      // const: true,
+      // The environment supports destructuring ('{ a, b } = obj').
+      // destructuring: true,
+      // The environment supports an async import() function to import EcmaScript modules.
+      // dynamicImport: false,
+      // The environment supports 'for of' iteration ('for (const x of array) { ... }').
+      // forOf: true,
+      // The environment supports ECMAScript Module syntax to import ECMAScript modules (import ... from '...').
+      // module: false,
+    },
   },
 
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
-        loader: 'ts-loader',
+        test: /\.(ts|tsx)$/,
+        use: [
+          'babel-loader',
+          {
+            loader: 'ts-loader',
+            options: {
+              transpileOnly: true,
+            },
+          },
+        ],
       },
       {
-        test: /.jsx?$/,
+        test: /\.jsx?$/,
         exclude: /node_modules/,
         use: [
           {
