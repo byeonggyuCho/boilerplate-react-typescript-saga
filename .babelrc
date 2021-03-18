@@ -1,8 +1,11 @@
 {
   "presets": [
-    "@babel/preset-env",
+    [
+      "@babel/preset-env",
+      { "targets": { "browsers": ["ie 11","last 2 versions", ">= 5% in KR"] } }
+    ],
     "@babel/preset-react",
-    "@babel/preset-typescript",
+    "@babel/preset-typescript"
   ],
   "plugins": [
     "@babel/plugin-syntax-dynamic-import",
