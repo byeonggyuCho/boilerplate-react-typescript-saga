@@ -13,7 +13,6 @@ const cssRegex = /\.css$/;
 const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
-const { templateContent } = require('./template');
 
 const dotenv = require('dotenv');
 

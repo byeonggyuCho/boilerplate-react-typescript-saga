@@ -23,8 +23,6 @@ export const initialState: StateBase = {
     menu: '',
     subMenu: '',
   },
-  modal: {},
-  contextMenu: {},
   serverHealth: {
     status: true,
     message: '',
@@ -35,28 +33,6 @@ export const initialState: StateBase = {
 };
 
 const base = createReducer<StateBase, BaseAction>(initialState, {
-  [OPEN_MODAL]: (state, { payload: { type, ...modalInfo } }) => ({
-    ...state,
-    modal: {
-      ...state.modal,
-      [type]: {
-        type,
-        open: true,
-        ...modalInfo,
-      },
-    },
-  }),
-  [CLOSE_MODAL]: (state, { payload: { type, ...rest } }) => ({
-    ...state,
-    modal: {
-      ...state.modal,
-      [type]: {
-        ...state.modal[type],
-        type,
-        open: false,
-      },
-    },
-  }),
   [OPEN_SIDEBAR]: (state, { payload }) => ({
     ...state,
     sidebar: {
@@ -84,27 +60,6 @@ const base = createReducer<StateBase, BaseAction>(initialState, {
       status: false,
     },
   }),
-  [OPEN_CONTEXT_MENU]: (state, { payload }) =>
-    produce(state, (draftState) => {
-      draftState.contextMenu[payload.type] = {
-        ...payload,
-        open: true,
-      };
-    }),
-  [CLOSE_CONTEXT_MENU]: (state, { payload: optionType }) =>
-    produce(state, (draftState) => {
-      draftState.contextMenu[optionType] = {
-        type: '',
-        open: false,
-        position: {
-          bottom: '',
-          top: '',
-          left: '',
-          right: '',
-        },
-        optionList: [],
-      };
-    }),
   [MOVE_PAGE]: (state, { payload }) => ({
     ...state,
     page: {
@@ -127,16 +82,6 @@ const base = createReducer<StateBase, BaseAction>(initialState, {
   [ADD_NOTIFICATION]: (state, { payload }) => ({
     ...state,
     notification: [...state.notification, payload],
-  }),
-  [REMOVE_NOTIFICATION]: (state, { payload: notificationId }) => ({
-    ...state,
-    notification: state.notification.filter(
-      (item) => item.id !== notificationId
-    ),
-  }),
-  [GET_MENU]: (state, { payload: role }) => ({
-    ...state,
-    menuList: ROLE_MANU[role],
   }),
 });
 

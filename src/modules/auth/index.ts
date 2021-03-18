@@ -37,10 +37,7 @@ export type UserType = {
   isPushAlarm: boolean;
   profileImage: string;
   notification: string;
-  brandManager: boolean; // 브랜드 매니저 여부
-  brand: BrandType | null;
 };
-
 
 export type LoginRes = {
   accessToken: string;

@@ -1,10 +1,6 @@
 import { createAction, createAsyncAction } from 'typesafe-actions';
 import { MenuName } from '@config';
 import { AxiosError } from 'axios';
-import { OpenContextMenu } from '@models/base';
-import { Authority } from '@models/auth';
-
-import { Notification, ContextMenu } from '@models/base';
 
 // redux store의 모든 정보를 초기화한다.
 export const CLEAR_STORE = 'base/CLEAR_STORE' as const;
@@ -39,14 +35,6 @@ export const movePage = createAction(
   MOVE_PAGE,
   // type은 해당 페이지가 수정, 삭제처럼 재활용되는 경우 진입 케이스를 구분하기 위해서 넣는다.
   (payload: { url: string; data?: any; type?: string }) => payload
-)();
-
-/**
- * @description 컴포넌트 메뉴 오픈
- */
-export const openContextMenu = createAction(
-  OPEN_CONTEXT_MENU,
-  (payload: OpenContextMenu) => payload
 )();
 
 /**
@@ -92,11 +80,6 @@ export const showNotification = createAction(
   (payload: string) => payload
 )();
 
-/**
- * @description 롤에 따른 메뉴를 가지고 옵니다.
- */
-export const getMenu = createAction(GET_MENU, (role: Authority) => role)();
-
 export const addNotification = createAction(
   ADD_NOTIFICATION,
   (payload: Notification) => payload
@@ -108,13 +91,11 @@ export const removeNotification = createAction(
 
 const actions = {
   clearStore,
-  getMenu,
   pageClean,
   movePage,
   openModal,
   closeModal,
   openSidebar,
-  openContextMenu,
   closeContextMenu,
   serverHealthCheck,
   addNotification,

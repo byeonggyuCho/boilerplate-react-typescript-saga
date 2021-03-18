@@ -1,5 +1,4 @@
 import { router } from '@utils/urlMap';
-import { Mode } from '@modules/brand/types';
 
 export type MenuName = 'store' | 'bell' | 'payment' | 'cs' | '';
 
@@ -144,5 +143,4 @@ export default {
   tokenRequestCycle: 1000 * 60 * 30,
   notificationDelay: 3000,
   papleUrl: process.env.PAYPLE_URL,
-  mode: (process.env.MODE as Mode) || 'normal',
 };

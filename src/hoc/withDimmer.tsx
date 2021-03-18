@@ -3,7 +3,6 @@ import React, {
   RefAttributes,
   forwardRef,
 } from 'react';
-import Dimmer from '@components/Templates/Dimmer';
 
 export interface WrappedComponentProps {
   name?: string;
@@ -45,7 +44,7 @@ const withDimmer: WidthDimmer = function withDimmer(WrappedComponent) {
 
     return (
       <>
-        <Dimmer invisible={open} onClick={handleClickDimmer} />
+        {/* <Dimmer invisible={open} onClick={handleClickDimmer} /> */}
         <WrappedComponent
           {...rest}
           open={open}

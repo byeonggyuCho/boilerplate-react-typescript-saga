@@ -11,7 +11,6 @@ import {
   SERVER_HEALTH_CHECK,
   MOVE_PAGE,
   SHOW_NOTIFICATION,
-  addNotification,
   removeNotification,
   showNotification,
   serverHealthCheck,
@@ -20,7 +19,6 @@ import {
 import { push } from 'connected-react-router';
 import { SagaInterface, Action, FailureAction } from '../';
 import config from '@config';
-import { ErrorType } from '@models/base';
 
 let _id = 0;
 const showNotification$ = function* ({
@@ -29,7 +27,6 @@ const showNotification$ = function* ({
 }: ReturnType<typeof showNotification>) {
   const nextId = ++_id;
 
-  yield put(addNotification({ id: nextId, text }));
   yield delay(config.notificationDelay);
   yield put(removeNotification(nextId));
 };

@@ -1,11 +1,7 @@
 import qs from 'qs';
 import { AxiosResponse } from 'axios';
-import { RepeatTypeOption } from '@models/checklist';
-import { TimeType } from '@models/checklist';
 import config from '@config';
-import { TickUnit } from '@models/base';
-import { BrandCode } from '@models/brand';
-import moment, { Moment as MomentTypes } from 'moment';
+// import moment, { Moment as MomentTypes } from 'moment';
 import { lazy } from 'react';
 
 type TempFunction = (...agrs: any) => void;
@@ -65,48 +61,6 @@ export const joinArray = (
 };
 
 /**
- * @description 달력 연산에서의 기준일을 반환한다.
- */
-export const getBasicDate = (
-  date: string,
-  otp: {
-    type: TickUnit;
-    value: number;
-    format?: string;
-  }
-) => {
-  let basicDate: MomentTypes | null = null;
-  const { value, type, format = 'YYYY.MM.DD' } = otp;
-
-  const amount = value;
-  const isIcrease = value > 0;
-  const m = moment(date);
-  const isSunday = m.day() === 0;
-
-  switch (type) {
-    case 'day':
-      basicDate = m.add(amount, 'day');
-      break;
-    case 'week':
-      if (isIcrease) {
-        // 이번주 월요일 혹은 다음주 월요일
-        basicDate = isSunday ? m.day(1) : m.day(1 + 7);
-      } else {
-        // 지지난주 월요일 혹은 지난주 월요일
-        basicDate = isSunday ? m.day(1 - 7 * 2) : m.day(1 - 7);
-      }
-      break;
-    case 'months':
-      basicDate = m.add(amount, 'months').date(1);
-      break;
-    default:
-      break;
-  }
-
-  return basicDate ? basicDate.format(format) : '';
-};
-
-/**
  * @description 키워드를 찾아서 배열형태로 반환하고 해당 위치를 알려준다.
  * @param keyword
  * @param match
@@ -145,29 +99,6 @@ export const findMatchedString = (keyword: string, match: string) => {
     match,
     keyword,
   };
-};
-
-/**
- * @description 오늘을 기준으로 미래인지 구분한다.
- * @param date 타겟 날짜
- * @param basicDate 기준일을 설정한다.
- * @param unit 같은날의 기준을 설정, 일, 시,분
- */
-export const isFuture = (
-  date: MomentTypes,
-  otp?: { basicDate?: MomentTypes; unit?: 'day' | 'hour' | 'minutes' }
-) => {
-  const target = otp?.basicDate || moment();
-
-  // 당일 오전 7시와 당일 오후 7시는 어떻게 나옴?
-  const diffDay = date.clone().diff(target, 'days');
-
-  if (diffDay === 0) {
-    const isToday = target.format('YYYY-MM-DD') === date.format('YYYY-MM-DD');
-    return !isToday;
-  } else {
-    return diffDay > 0;
-  }
 };
 
 /**
@@ -298,156 +229,9 @@ export const imagePreload = function imagePreload(src: string) {
   img.src = src;
 };
 
-/**
- *
- * @description moment를 이용해 날짜를 계산한다.
- * @param date 2020.01.01
- * @param otp.type 날짜의 단위
- * @param otp.value 단위의 크기 (default: 1)
- * @param otp.format (default:  'YYYY.MM.DD')데이터 포멧
- * @param otp.recent (default: true) false이고 type이 weeks date가 화요일일 때 이틀을 조회한다.
- * @author 조병규
- */
-export const addDate = (
-  date: string,
-  otp: {
-    type: TickUnit;
-    value: number;
-    format?: string;
-    recent?: boolean;
-  }
-): string => {
-  let result: MomentTypes | null = null;
-  const { type, value = 1, format = 'YYYY.MM.DD', recent = true } = otp;
-  const m = moment(date, format);
-
-  // 요일 0:일요일 ~ 6:토요일
-  const [year, month, thisDate, thisDay] = [
-    m.year(),
-    m.month(),
-    m.date(),
-    m.day(),
-  ];
-
-  if (recent) {
-    result = m.add(value, type);
-  } else if (type === 'months') {
-    // 그 달의 1일
-    result = m.add(value, type).date(1);
-
-    console.log('addDate', result, month);
-  } else if (type === 'week') {
-    // 기준일은 일요일은 반환한다.
-    // 1->0
-    // -1>-7
-
-    // debugger;
-
-    result = m.day(value > 0 ? 0 : -7);
-  } else {
-    result = m.add(value, type);
-  }
-
-  return result ? result.format(format) : '';
-};
-
 export type Period = {
   startDate: string;
   endDate: string;
-};
-
-/**
- * @description 기간을 반환한다.
- * @param date
- * @param otp
- */
-export const getPeriod = (
-  date: string,
-  otp: {
-    type: TickUnit;
-    format?: string;
-  }
-): Period => ({
-  startDate: getStartDate(date, otp),
-  endDate: getEndDate(date, otp),
-});
-
-/**
- * @description 시작일을 반환합니다.
- */
-export const getStartDate = (
-  date: string,
-  otp: {
-    type: TickUnit;
-    format?: string;
-  }
-): string => {
-  let result: MomentTypes | null = null;
-  const { type, format = 'YYYY.MM.DD' } = otp;
-  const m = moment(date);
-  const isSunday = m.day() === 0;
-
-  switch (type) {
-    case 'day':
-      result = m;
-      break;
-    case 'week':
-      // 일요일이면 지난주 월요일
-      // 일요일이 아니면 이번주 월요일
-      result = m.day(isSunday ? 1 - 7 : 1);
-      break;
-    case 'months':
-      // 그 달의 1일
-      result = m.date(1);
-      break;
-    default:
-      result = m;
-      break;
-  }
-  return result ? result.format(format) : '';
-};
-
-/**
- * @description 종료일을 반환합니다.
- */
-export const getEndDate = (
-  date: string,
-  otp: {
-    type: TickUnit;
-    format?: string;
-  }
-): string => {
-  let endDate: MomentTypes | null = null;
-  const { type, format = 'YYYY.MM.DD' } = otp;
-  const today = moment();
-  const m = moment(date);
-  const isSunday = m.day() === 0;
-
-  switch (type) {
-    case 'day':
-      endDate = m;
-      break;
-    case 'week':
-      // 일요일이면 이번주 일요일
-      // 일요일이 아니면 이번주 다음주 일요일
-      endDate = isSunday ? m.clone().day(0) : m.clone().day(0 + 7);
-      break;
-    case 'months':
-      // 이번달의 말일
-      endDate = m.endOf('month');
-
-      break;
-    default:
-      endDate = m;
-      break;
-  }
-
-  // 미래라면 오늘
-  if (endDate && isFuture(endDate)) {
-    endDate = today;
-  }
-
-  return endDate ? endDate.format(format) : '';
 };
 
 /**
@@ -465,19 +249,6 @@ export const barToPeriod = (date: string) => {
 type GetDateArg = {
   date?: Date;
   format?: string;
-};
-
-/**
- * @description
- * @deprecated addDate와 통합 예정
- * @param args
- */
-export const getDate = (args: GetDateArg = { date: new Date() }): string => {
-  const { date = new Date(), format = 'YYYY.MM.DD' } = args;
-
-  const dateArr = [date.getFullYear(), date.getMonth() + 1, date.getDate()];
-
-  return moment(dateArr.join('-')).format(format);
 };
 
 /**
@@ -629,30 +400,6 @@ export const isEmpty = (value: any) => {
   return empty;
 };
 
-export const validateRepeatTime = ({
-  oneday,
-  repeatWeeks,
-  repeatDays,
-}: RepeatTypeOption) => {
-  if (!repeatWeeks && !repeatDays && !oneday) {
-    return false;
-  } else if (!oneday && !repeatWeeks && repeatDays) {
-    return false;
-  } else if (!oneday && repeatWeeks && !repeatDays) {
-    return false;
-  }
-
-  return true;
-};
-
-export const customBrandCode = (brandCode: BrandCode) => {
-  if (brandCode === 'officemaster') return 'office';
-  else if (brandCode === 'coffeebanhada') return '커반';
-  else if (brandCode === 'seveneleven') return '세븐';
-
-  return brandCode;
-};
-
 /**
  * @description TimeType을 string으로 반환합ㄴ디ㅏ.
  * @param {TimeType} date
@@ -710,101 +457,6 @@ export const getDisplayName = (name: string) => {
     return name.substr(0, 1);
   }
   return '';
-};
-
-export const displayTimeFormatter = (data: TimeType) => {
-  const hourNum: number = parseInt(data.hour.toString(), 10);
-  const isAfternoon = hourNum > 11;
-  const displayHour = isAfternoon
-    ? hourNum === 12
-      ? 12
-      : hourNum - 12
-    : hourNum;
-
-  return [
-    isAfternoon ? '오후' : '오전',
-    `${fillZero(displayHour, 2)}:${fillZero(data.minute, 2)}`,
-  ].join(' ');
-};
-
-const sortUpstream = (arr: any[]) =>
-  arr.sort((a, b) => {
-    if (a > b) {
-      return 1;
-    } else if (a < b) {
-      return -1;
-    } else {
-      return 0;
-    }
-  });
-
-/**
- * @description 반복 설정
- */
-export const repeatFormFomatter = (req: RepeatTypeOption) => {
-  const re: string[] = [];
-
-  const days = ['월', '화', '수', '목', '금', '토', '일'];
-
-  const repetitionCycle = getRepetition(req);
-
-  if (!repetitionCycle) {
-    return null;
-  }
-
-  re.push(repetitionCycle);
-
-  if (repetitionCycle === '월간') {
-    if (req.repeatWeeks && req.repeatWeeks.length > 0) {
-      re.push(sortUpstream(req.repeatWeeks.split('')).join(',') + '번째 주');
-    }
-
-    if (req.repeatDays && req.repeatDays.length > 0) {
-      re.push(
-        sortUpstream(req.repeatDays.split(''))
-          .map((item) => days[Number(item) - 1])
-          .join(',')
-      );
-    }
-  } else if (repetitionCycle === '주간') {
-    if (req.repeatDays && req.repeatDays.length > 0)
-      re.push(
-        sortUpstream(req.repeatDays.split(''))
-          .map((item) => days[Number(item) - 1])
-          .join(',')
-      );
-  }
-  return re.join('  •  ');
-};
-
-/**
- * @description 반복 주기를 반환한다.
- * @param param0
- */
-export const getRepetition = (
-  { oneday, repeatWeeks = '', repeatDays = '' }: RepeatTypeOption,
-  otp?: {
-    lang: 'eng';
-  }
-) => {
-  // {oneday: "", repeatWeeks: "1234567", repeatDays: "12345"}
-  const re = oneday
-    ? 'oneDay'
-    : repeatWeeks?.length === 5 && repeatDays?.length === 7
-    ? 'daily'
-    : repeatWeeks?.length === 5 &&
-      !!repeatDays?.length &&
-      repeatDays?.length < 7
-    ? 'weekly'
-    : !!repeatWeeks?.length && repeatWeeks?.length < 5
-    ? 'monthly'
-    : null;
-
-  if (re) {
-    return otp?.lang === 'eng' ? re : repetitionMap[re];
-  } else {
-    return null;
-  }
 };
 
 /**

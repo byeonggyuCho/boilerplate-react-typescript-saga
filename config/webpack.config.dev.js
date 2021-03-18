@@ -4,7 +4,6 @@ const HtmlWebPackPlugin = require('html-webpack-plugin');
 
 module.exports = merge(common, {
   mode: 'development',
-  // devtool: 'cheap-module-source-map',
   devtool: 'eval-cheap-module-source-map',
 
   plugins: [
